@@ -3,16 +3,24 @@ from utils import read_data
 import time
 
 
-def find_digits(line: str, mapping: Dict[str, int]):
+def find_digits(line: str, mapping: Dict[str, int] = None):
     first = last = None
     # Find first digit
     for i in range(len(line)):
-        if any(line[i:].startswith(match := x) for x in mapping.keys()):
+        # Early-out isdigit triples the performance because it's a cheaper check
+        if line[i].isdigit():
+            first = int(line[i])
+            break
+        # any stops once it hits a match, and match := x preserves which match I hit
+        if any(line[i:].startswith(match := x) for x in (mapping or {}).keys()):
             first = mapping[match]
             break
     # Find last digit
     for i in reversed(range(len(line))):
-        if any(line[i:].startswith(match := x) for x in mapping.keys()):
+        if line[i].isdigit():
+            last = int(line[i])
+            break
+        if any(line[i:].startswith(match := x) for x in (mapping or {}).keys()):
             last = mapping[match]
             break
 
@@ -21,12 +29,11 @@ def find_digits(line: str, mapping: Dict[str, int]):
 
 def main():
     lines = read_data().splitlines()
-    part_one_mapping = {str(x): x for x in range(10)}
-    print(f"Part one: {sum(find_digits(x, part_one_mapping) for x in lines)}")
+    print(f"Part one: {sum(find_digits(x) for x in lines)}")
 
     words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-    part_two_mapping = part_one_mapping | {words[x]: x for x in range(10)}
-    print(f"Part two: {sum(find_digits(x, part_two_mapping) for x in lines)}")
+    word_mappings = {words[x]: x for x in range(10)}
+    print(f"Part two: {sum(find_digits(x, word_mappings) for x in lines)}")
 
 
 if __name__ == '__main__':
