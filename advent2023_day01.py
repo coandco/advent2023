@@ -8,33 +8,23 @@ def part_one(line):
 
 
 words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-mapping = {str(x): str(x) for x in range(10)} | {words[x]: str(x) for x in range(10)}
+mapping = {str(x): x for x in range(10)} | {words[x]: x for x in range(10)}
 
 
 def part_two(line: str):
     first = last = None
     # Find first digit
     for i in range(len(line)):
-        for length in (1, 3, 4, 5):
-            possible_digit = line[i:i+length]
-            try:
-                first = mapping[possible_digit]
-            except KeyError:
-                pass
-        if first is not None:
+        if any(line[i:].startswith(match := x) for x in mapping.keys()):
+            first = mapping[match]
             break
     # Find last digit
     for i in reversed(range(len(line))):
-        for length in (1, 3, 4, 5):
-            possible_digit = line[i:i+length]
-            try:
-                last = mapping[possible_digit]
-            except KeyError:
-                pass
-        if last is not None:
+        if any(line[i:].startswith(match := x) for x in mapping.keys()):
+            last = mapping[match]
             break
 
-    return int(f'{first}{last}')
+    return (first*10) + last
 
 
 def main():
