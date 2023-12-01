@@ -1,6 +1,10 @@
 from utils import read_data
 import time
-import re
+
+
+words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+mapping = {str(x): str(x) for x in range(10)} | {words[x]: str(x) for x in range(10)}
+sorted_mappings = {x: {k: v for k, v in mapping.items() if len(k) == x} for x in (1, 3, 4, 5)}
 
 
 def part_one(line):
@@ -8,26 +12,28 @@ def part_one(line):
     return int(f'{digits[0]}{digits[-1]}')
 
 
-mapping = {
-    '1': 'one',
-    '2': 'two',
-    '3': 'three',
-    '4': 'four',
-    '5': 'five',
-    '6': 'six',
-    '7': 'seven',
-    '8': 'eight',
-    '9': 'nine'
-}
-reversed_mapping = {v: k for k, v in mapping.items()}
-DIGIT_WORDS = re.compile('(?=(' + "|".join(mapping.values()) + '))')
-
-
 def part_two(line: str):
-    for num, word in mapping.items():
-        line = line.replace(num, word)
-    digits = [reversed_mapping[x] for x in DIGIT_WORDS.findall(line)]
-    return int(f'{digits[0]}{digits[-1]}')
+    first = last = None
+    # Find first digit
+    for i in range(len(line)):
+        for length in sorted_mappings.keys():
+            try:
+                first = sorted_mappings[length][line[i:i+length]]
+            except KeyError:
+                pass
+        if first is not None:
+            break
+    # Find last digit
+    for i in reversed(range(len(line))):
+        for length in sorted_mappings.keys():
+            try:
+                last = sorted_mappings[length][line[i:i+length]]
+            except KeyError:
+                pass
+        if last is not None:
+            break
+
+    return int(f'{first}{last}')
 
 
 def main():
