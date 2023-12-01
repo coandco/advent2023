@@ -1,17 +1,9 @@
+from typing import Dict
 from utils import read_data
 import time
 
 
-def part_one(line):
-    digits = [x for x in line if x.isdigit()]
-    return int(f'{digits[0]}{digits[-1]}')
-
-
-words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-mapping = {str(x): x for x in range(10)} | {words[x]: x for x in range(10)}
-
-
-def part_two(line: str):
+def find_digits(line: str, mapping: Dict[str, int]):
     first = last = None
     # Find first digit
     for i in range(len(line)):
@@ -29,8 +21,12 @@ def part_two(line: str):
 
 def main():
     lines = read_data().splitlines()
-    print(f"Part one: {sum(part_one(x) for x in lines)}")
-    print(f"Part two: {sum(part_two(x) for x in lines)}")
+    part_one_mapping = {str(x): x for x in range(10)}
+    print(f"Part one: {sum(find_digits(x, part_one_mapping) for x in lines)}")
+
+    words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+    part_two_mapping = part_one_mapping | {words[x]: x for x in range(10)}
+    print(f"Part two: {sum(find_digits(x, part_two_mapping) for x in lines)}")
 
 
 if __name__ == '__main__':
