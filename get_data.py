@@ -1,18 +1,14 @@
-import aocd.exceptions
+from aocd.exceptions import PuzzleLockedError
 from aocd.models import Puzzle
 from pathlib import Path
-import re
 import sys
-
-DIGITS = re.compile(r'\d+')
 
 # This is a standalone script meant to be run to automatically grab my data
 # for a given year/day and dump it into an automatically-named file.
 
 YEAR_NUM = 2023
 
-existing_inputs = list(Path('inputs/').glob('*.txt'))
-old_max_day = max(int(DIGITS.findall(x)[1]) for x in existing_inputs) if existing_inputs else 0
+old_max_day = len(list(Path('inputs/').glob('*.txt')))
 new_day = old_max_day + 1
 
 try:
@@ -20,7 +16,7 @@ try:
 
     file_location = Path(f'inputs/advent{YEAR_NUM}_day{new_day:02d}_input.txt')
     file_location.write_text(puzzle.input_data)
-except aocd.exceptions.PuzzleLockedError as e:
+except PuzzleLockedError as e:
     print(f"Day {new_day} not available: {e}")
     sys.exit(1)
 
