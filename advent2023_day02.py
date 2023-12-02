@@ -1,7 +1,7 @@
 import re
 import time
-from collections import defaultdict
 from math import prod
+from typing import Dict
 
 from utils import read_data
 
@@ -9,30 +9,24 @@ PILES = re.compile(r"(?P<amount>\d+) (?P<color>red|green|blue)")
 
 
 class Game:
-    max_colors: defaultdict[str, int]
+    max_colors: Dict[str, int]
 
     def __init__(self, line: str):
-        self.max_colors = defaultdict(int)
+        self.max_colors = {"red": 0, "green": 0, "blue": 0}
         for match in PILES.finditer(line):
-            self.max_colors[match.group("color")] = max(
-                self.max_colors[match.group("color")], int(match.group("amount"))
-            )
+            color, amount = match.group("color"), int(match.group("amount"))
+            self.max_colors[color] = max(self.max_colors[color], amount)
 
-    def is_valid(self, max_red: int, max_green: int, max_blue: int) -> bool:
-        return (
-            self.max_colors["red"] <= max_red
-            and self.max_colors["green"] <= max_green
-            and self.max_colors["blue"] <= max_blue
-        )
-
-    def get_power(self) -> int:
-        return prod(self.max_colors.values())
+    def is_valid(self) -> bool:
+        max_valid = {"red": 12, "green": 13, "blue": 14}
+        return all(self.max_colors[x] <= max_valid[x] for x in max_valid)
 
 
 def main():
     games = [Game(x) for x in read_data().splitlines()]
-    print(f"Part one: {sum(i+1 for i, x in enumerate(games) if x.is_valid(12, 13, 14))}")
-    print(f"Part two: {sum(x.get_power() for x in games)}")
+    # For part 1, we need to do i+1 because game 1 starts on line 0
+    print(f"Part one: {sum(i+1 for i, x in enumerate(games) if x.is_valid())}")
+    print(f"Part two: {sum(prod(x.max_colors.values()) for x in games)}")
 
 
 if __name__ == "__main__":
