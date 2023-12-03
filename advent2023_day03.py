@@ -1,76 +1,62 @@
-from math import log10
-from typing import Dict, List, NamedTuple, Set
-
-from utils import read_data, BaseCoord as Coord
 import time
+from collections import defaultdict
+from math import prod
+from typing import Dict, List, Set
 
-
-class Number(NamedTuple):
-    origin: Coord
-    raw_value: str
-    value: int
-
-    @staticmethod
-    def from_raw(origin: Coord, raw_value: str) -> 'Number':
-        return Number(origin=origin, raw_value=raw_value, value=int(raw_value))
-
-    @property
-    def self_coords(self) -> Set[Coord]:
-        return {Coord(y=self.origin.y, x=self.origin.x+offset) for offset in range(len(self.raw_value))}
-
-    @property
-    def neighbors(self):
-        return set().union(*(x.neighbors() for x in self.self_coords)) - self.self_coords
-
-    def is_part_number(self, symbols: Dict[Coord, str]):
-        return any(x in symbols for x in self.neighbors)
+from utils import BaseCoord as Coord
+from utils import read_data
 
 
 class Schematic:
-    board: Dict[Coord, str]
-    numbers: Dict[Coord, Number]
+    numbers: Dict[Coord, str]
     symbols: Dict[Coord, str]
+    symbol_neighbors: defaultdict[Coord, Set[Coord]]
 
     def __init__(self, lines: List[str]):
-        self.board = {}
         self.numbers = {}
         self.symbols = {}
-        part_origin = None
-        part_raw_value = None
+        self.symbol_neighbors = defaultdict(set)
         for y, line in enumerate(lines):
-            if part_origin:
-                self.numbers[part_origin] = Number.from_raw(part_origin, part_raw_value)
-                part_origin = None
-                part_raw_value = None
             for x, char in enumerate(line):
                 curloc = Coord(y=y, x=x)
-                if char != '.':
-                    self.board[curloc] = char
-                if char.isdigit():
-                    if not part_origin:
-                        part_origin = curloc
-                        # We want part_raw_value to be a copy of the char
-                        part_raw_value = char[:]
-                    else:
-                        part_raw_value += char
+                if char == ".":
+                    continue
+                elif char.isdigit():
+                    self.numbers[curloc] = char
                 else:
-                    if part_origin:
-                        self.numbers[part_origin] = Number.from_raw(part_origin, part_raw_value)
-                        part_origin = None
-                        part_raw_value = None
-                    if char != '.':
-                        self.symbols[curloc] = char
+                    self.symbols[curloc] = char
+        for symbol_loc in self.symbols:
+            for loc in symbol_loc.neighbors():
+                if loc in self.numbers:
+                    while loc + Coord(y=0, x=-1) in self.numbers:
+                        loc = loc + Coord(y=0, x=-1)
+                    self.symbol_neighbors[symbol_loc].add(loc)
 
-    def valid_part_nums(self) -> List[int]:
-        return [x.value for x in self.numbers.values() if x.is_part_number(self.symbols)]
+    def part_num_origins(self) -> Set[Coord]:
+        return set().union(*self.symbol_neighbors.values())
+
+    def gear_locs(self) -> Set[Coord]:
+        return {x for x in self.symbols if self.symbols[x] == "*" and len(self.symbol_neighbors[x]) == 2}
+
+    def gear_ratio(self, gear: Coord) -> int:
+        return prod(self.read_part_num(x) for x in self.symbol_neighbors[gear])
+
+    def read_part_num(self, origin: Coord) -> int:
+        cur_loc = origin
+        digits = self.numbers[cur_loc]
+        while cur_loc + Coord(y=0, x=1) in self.numbers:
+            cur_loc = cur_loc + Coord(y=0, x=1)
+            digits += self.numbers[cur_loc]
+        return int(digits)
 
 
 def main():
     board = Schematic(read_data().splitlines())
-    print(f"Part one: {sum(board.valid_part_nums())}")
+    print(f"Part one: {sum(board.read_part_num(x) for x in board.part_num_origins())}")
+    print(f"Part two: {sum(board.gear_ratio(x) for x in board.gear_locs())}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time.monotonic()
     main()
     print(f"Time: {time.monotonic()-start}")
