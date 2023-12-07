@@ -41,7 +41,6 @@ class PartOneHand:
                 if self.raw_hand[i] == other.raw_hand[i]:
                     continue
                 return self.card_strength(i) < other.card_strength(i)
-
         else:
             return self.type < other.type
 
@@ -60,9 +59,10 @@ class PartTwoHand(PartOneHand):
 
 
 def main():
-    part_one_hands = sorted(PartOneHand(x) for x in read_data().splitlines())
+    raw_input = read_data().splitlines()
+    part_one_hands = sorted(PartOneHand(x) for x in raw_input)
     print(f"Part one: {sum(x.bid * (i+1) for i, x in enumerate(part_one_hands))}")
-    part_two_hands = sorted(PartTwoHand(x) for x in read_data().splitlines())
+    part_two_hands = sorted(PartTwoHand(x) for x in raw_input)
     print(f"Part two: {sum(x.bid * (i+1) for i, x in enumerate(part_two_hands))}")
 
 
