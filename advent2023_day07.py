@@ -14,8 +14,8 @@ HAND_TYPES = {
     (1, 1, 1, 1, 1): (1, "High card")
 }
 
-CARD_STRENGTHS = {"A": 14, "K": 13, "Q": 12, "J": 11, "T": 10} | {str(x): x for x in range(2, 10)}
-REVISED_STRENGTHS = {k: v for k, v in CARD_STRENGTHS.items() if k != "J"} | {"J": 1}
+CARD_STRENGTHS = {x: 13-i for i, x in enumerate('AKQJT98765432')}
+REVISED_STRENGTHS = {x: 13-i for i, x in enumerate('AKQT98765432J')}
 
 
 class PartOneHand:
