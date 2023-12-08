@@ -1,11 +1,11 @@
+import re
+import time
 from math import lcm
-from typing import Dict, Tuple, Iterable
+from typing import Dict, Iterable, Tuple
 
 from utils import read_data
-import time
-import re
 
-NAMES = re.compile(r'[0-9A-Z]+')
+NAMES = re.compile(r"[0-9A-Z]+")
 
 
 class Network:
@@ -23,13 +23,13 @@ class Network:
     def instruction_loop(self) -> Iterable[int]:
         while True:
             for char in self.instructions:
-                yield 1 if char == 'R' else 0
+                yield 1 if char == "R" else 0
 
     def traverse(self) -> int:
-        cur_node = 'AAA'
+        cur_node = "AAA"
         steps = 0
         for dir in self.instruction_loop():
-            if cur_node == 'ZZZ':
+            if cur_node == "ZZZ":
                 break
             cur_node = self.nodes[cur_node][dir]
             steps += 1
@@ -40,11 +40,11 @@ class Network:
         for dir in self.instruction_loop():
             node = self.nodes[node][dir]
             steps += 1
-            if node.endswith('Z'):
+            if node.endswith("Z"):
                 return steps
 
     def traverse_part_two(self) -> int:
-        nodes = [x for x in self.nodes if x.endswith('A')]
+        nodes = [x for x in self.nodes if x.endswith("A")]
         periods = [self.find_period(x) for x in nodes]
         return lcm(*periods)
 
@@ -55,7 +55,7 @@ def main():
     print(f"Part two: {network.traverse_part_two()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time.monotonic()
     main()
     print(f"Time: {time.monotonic()-start}")
