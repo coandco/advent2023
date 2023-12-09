@@ -25,10 +25,8 @@ class Sequence:
 
 def main():
     sequences = [Sequence(x) for x in read_data().splitlines()]
-    predictions = [x.predict() for x in sequences]
-    print(f"Part one: {sum(predictions)}")
-    backwards_predictions = [x.predict(reversed=True) for x in sequences]
-    print(f"Part two: {sum(backwards_predictions)}")
+    print(f"Part one: {sum(x.predict() for x in sequences)}")
+    print(f"Part two: {sum(x.predict(reversed=True) for x in sequences)}")
 
 
 if __name__ == '__main__':
