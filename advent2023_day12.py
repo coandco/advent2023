@@ -1,8 +1,8 @@
+import time
 from functools import lru_cache
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 from utils import read_data
-import time
 
 
 class Condition:
@@ -58,7 +58,7 @@ def main():
     print(f"Part 2: {sum(x.count_possibilities() for x in conditions)}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time.monotonic()
     main()
     print(f"Time: {time.monotonic()-start}")
