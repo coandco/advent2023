@@ -31,18 +31,11 @@ class Pattern:
             output.append(line)
         return "\n".join(output)
 
-    def matching_columns(self, i: int) -> Iterator[Tuple[int, int]]:
+    @staticmethod
+    def matching_nums(i: int, max_value: int) -> Iterator[Tuple[int, int]]:
         image = i
         reflection = i - 1
-        while 0 <= image < self.max_x and 0 <= reflection < self.max_x:
-            yield image, reflection
-            image += 1
-            reflection -= 1
-
-    def matching_rows(self, i: int) -> Iterator[Tuple[int, int]]:
-        image = i
-        reflection = i - 1
-        while 0 <= image < self.max_y and 0 <= reflection < self.max_y:
+        while 0 <= image < max_value and 0 <= reflection < max_value:
             yield image, reflection
             image += 1
             reflection -= 1
@@ -50,7 +43,7 @@ class Pattern:
     def find_mirror(self, old_line: Optional[int] = None) -> Optional[int]:
         # Check for vertical reflections
         for i in range(1, self.max_x):
-            for image, reflection in self.matching_columns(i):
+            for image, reflection in self.matching_nums(i, self.max_x):
                 if self.columns[image] != self.columns[reflection]:
                     break
             else:
@@ -58,7 +51,7 @@ class Pattern:
                     return i
         # Check for horizontal reflections
         for i in range(1, self.max_y):
-            for image, reflection in self.matching_rows(i):
+            for image, reflection in self.matching_nums(i, self.max_y):
                 if self.rows[image] != self.rows[reflection]:
                     break
             else:
