@@ -7,7 +7,7 @@ from utils import read_data
 
 class Condition:
     raw_record: str
-    parity: Tuple[int]
+    parity: Tuple[int, ...]
     known_good: int
     known_bad: int
 
@@ -18,7 +18,7 @@ class Condition:
         self.known_bad = int("".join(["0" if x == "." else "1" for x in self.raw_record]), base=2)
 
     @lru_cache(maxsize=None)
-    def _count_possibilities(self, groups: Tuple[int], offset: int) -> int:
+    def _count_possibilities(self, groups: Tuple[int, ...], offset: int) -> int:
         # If we've successfully placed all the groups, this is a valid possibility
         if not groups:
             return 1
