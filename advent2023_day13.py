@@ -1,4 +1,4 @@
-from typing import Set, Tuple, Iterator, Optional
+from typing import Set, Tuple, Iterator, Optional, List
 
 from utils import read_data, BaseCoord as Coord
 import time
@@ -6,6 +6,8 @@ import time
 
 class Pattern:
     field: Set[Coord]
+    columns: List[Set[int]]
+    rows: List[Set[int]]
     max_x: int
     max_y: int
 
@@ -18,6 +20,9 @@ class Pattern:
             for x, char in enumerate(line):
                 if char == "#":
                     self.field.add(Coord(y=y, x=x))
+
+        self.columns = [{x.y for x in self.field if x.x == i} for i in range(self.max_x)]
+        self.rows = [{x.x for x in self.field if x.y == i} for i in range(self.max_y)]
 
     def __str__(self):
         output = []
@@ -46,7 +51,7 @@ class Pattern:
         # Check for vertical reflections
         for i in range(1, self.max_x):
             for image, reflection in self.matching_columns(i):
-                if {x.y for x in self.field if x.x == image} != {x.y for x in self.field if x.x == reflection}:
+                if self.columns[image] != self.columns[reflection]:
                     break
             else:
                 if i != old_line:
@@ -54,7 +59,7 @@ class Pattern:
         # Check for horizontal reflections
         for i in range(1, self.max_y):
             for image, reflection in self.matching_rows(i):
-                if {x.x for x in self.field if x.y == image} != {x.x for x in self.field if x.y == reflection}:
+                if self.rows[image] != self.rows[reflection]:
                     break
             else:
                 if i * 100 != old_line:
@@ -62,10 +67,15 @@ class Pattern:
         return None
 
     def toggle_coord(self, coord: Coord):
-        if coord in self.field:
-            self.field.remove(coord)
+        if coord.y in self.columns[coord.x]:
+            self.columns[coord.x].remove(coord.y)
         else:
-            self.field.add(coord)
+            self.columns[coord.x].add(coord.y)
+
+        if coord.x in self.rows[coord.y]:
+            self.rows[coord.y].remove(coord.x)
+        else:
+            self.rows[coord.y].add(coord.x)
 
     def smudge_walk(self, old_line: int) -> int:
         for y in range(self.max_y):
