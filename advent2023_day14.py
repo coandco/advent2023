@@ -25,14 +25,21 @@ class Platform:
         self.initial_rocks = self.rocks.copy()
         self.max_x = len(lines[0])
         self.max_y = len(lines)
+        # Put a line of walls around the field so we don't have to do separate bounds checking
+        self.walls |= (
+            {Coord(y=-1, x=x) for x in range(-1, self.max_x)}
+            | {Coord(y=y, x=-1) for y in range(-1, self.max_y)}
+            | {Coord(y=self.max_y, x=x) for x in range(-1, self.max_x + 1)}
+            | {Coord(y=y, x=self.max_x) for y in range(-1, self.max_y + 1)}
+        )
 
     def __str__(self, rock_locs: Optional[FrozenSet[Coord]] = None) -> str:
         rock_locs = rock_locs or self.rocks
         output = []
-        for y in range(self.max_y):
+        for y in range(-1, self.max_y+1):
             # WTF Pycharm https://youtrack.jetbrains.com/issue/PY-30598
             line = [" "]
-            for x in range(self.max_x):
+            for x in range(-1, self.max_x+1):
                 curloc = Coord(y=y, x=x)
                 if curloc in self.walls:
                     line.append("#")
@@ -46,14 +53,11 @@ class Platform:
     def reset(self):
         self.rocks = self.initial_rocks.copy()
 
-    def in_bounds(self, coord: Coord) -> bool:
-        return 0 <= coord.x < self.max_x and 0 <= coord.y < self.max_y
-
     def roll_one(self, rock: Coord, direction: str):
         new_pos = rock
         while True:
             to_test = new_pos + DIRECTIONS[direction]
-            if (not self.in_bounds(to_test)) or to_test in self.walls or to_test in self.rocks:
+            if to_test in self.walls or to_test in self.rocks:
                 break
             new_pos = to_test
         if new_pos != rock:
@@ -72,7 +76,7 @@ class Platform:
         seen = [frozenset(self.rocks)]
         offset = None
         while not offset:
-            for direction in ('N', 'W', 'S', 'E'):
+            for direction in ("N", "W", "S", "E"):
                 self.roll(direction)
                 rock_state = frozenset(self.rocks)
                 if rock_state in seen:
@@ -92,7 +96,7 @@ class Platform:
 
 def main():
     platform = Platform(read_data())
-    platform.roll('N')
+    platform.roll("N")
     print(f"Part one: {platform.score()}")
     platform.reset()
     print(f"Part two: {platform.spin_cycle(1000000000)}")
