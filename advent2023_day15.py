@@ -1,7 +1,7 @@
+import time
 from typing import Dict
 
 from utils import read_data
-import time
 
 
 def lhash(tohash: str) -> int:
@@ -30,9 +30,7 @@ def main():
     print(f"Part two: {sum(score_one(i, x) for i, x in enumerate(boxes, start=1))}")
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time.monotonic()
     main()
     print(f"Time: {time.monotonic()-start}")
