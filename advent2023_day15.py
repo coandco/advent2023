@@ -13,7 +13,7 @@ def lhash(tohash: str) -> int:
     return curval
 
 
-def score_one(boxnum: int, box: Dict[str, int]):
+def score_one(boxnum: int, box: Dict[str, int]) -> int:
     return boxnum * sum(i * v for i, v in enumerate(box.values(), start=1))
 
 
