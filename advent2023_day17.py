@@ -35,12 +35,12 @@ class HeatMap:
         heapq.heappush(heap, (0, Coord(0, 0), "E", 0))
         while heap:
             heat_loss, curloc, last_dir, run_length = heapq.heappop(heap)
+            if curloc == destination:
+                return heat_loss
             if (curloc, last_dir, run_length) in seen:
                 continue
             seen.add((curloc, last_dir, run_length))
             for heading in VALID_DIRECTIONS[last_dir]:
-                if curloc == destination:
-                    return heat_loss
                 if run_length < min_move and heading != last_dir:
                     continue
                 if run_length >= max_move and heading == last_dir:
