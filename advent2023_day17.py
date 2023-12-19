@@ -1,5 +1,6 @@
 import heapq
 import time
+from itertools import accumulate
 from typing import Dict
 
 from utils import BaseCoord as Coord
@@ -24,32 +25,34 @@ class HeatMap:
         self.max_x = len(lines[0])
 
     def in_bounds(self, coord: Coord) -> bool:
-        return 0 <= coord.x < self.max_x and 0 <= coord.y < self.max_y
+        return coord.x in range(self.max_x) and coord.y in range(self.max_y)
 
     def find_min_path(self, min_move: int = 0, max_move: int = 3) -> int:
         # We need to avoid loops
         seen = set()
-        heap = []
+        # heat_loss, curloc, last_dir
+        heap = [(0, Coord(0, 0), "E"), (0, Coord(0, 0), "S")]
         destination = Coord(y=self.max_y - 1, x=self.max_x - 1)
-        # heat_loss, curloc, last_dir, run_length
-        heapq.heappush(heap, (0, Coord(0, 0), "E", 0))
         while heap:
-            heat_loss, curloc, last_dir, run_length = heapq.heappop(heap)
+            heat_loss, curloc, last_dir = heapq.heappop(heap)
             if curloc == destination:
                 return heat_loss
-            if (curloc, last_dir, run_length) in seen:
+            if (curloc, last_dir) in seen:
                 continue
-            seen.add((curloc, last_dir, run_length))
-            for heading in VALID_DIRECTIONS[last_dir]:
-                if run_length < min_move and heading != last_dir:
-                    continue
-                if run_length >= max_move and heading == last_dir:
-                    continue
-                new_loc: Coord = curloc + DIRECTIONS[heading]
-                if not self.in_bounds(new_loc):
-                    continue
-                new_run_length: int = run_length + 1 if heading == last_dir else 1
-                heapq.heappush(heap, (heat_loss + self.map[new_loc], new_loc, heading, new_run_length))
+            seen.add((curloc, last_dir))
+            for heading in (RIGHT_TURNS[last_dir], LEFT_TURNS[last_dir]):
+                new_heat_loss = heat_loss
+                new_loc = curloc
+                # Need to start at one to accumulate total cost
+                for i in range(1, max_move + 1):
+                    new_loc += DIRECTIONS[heading]
+                    if not self.in_bounds(new_loc):
+                        break
+                    new_heat_loss += self.map[new_loc]
+                    # Now that we've accumulated the heat loss, apply the min move setting
+                    if i < min_move:
+                        continue
+                    heapq.heappush(heap, (new_heat_loss, new_loc, heading))
 
 
 def main():
