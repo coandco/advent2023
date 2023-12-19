@@ -1,7 +1,7 @@
 import heapq
 import time
 from itertools import accumulate
-from typing import Dict
+from typing import Dict, Iterator, Tuple
 
 from utils import BaseCoord as Coord
 from utils import read_data
@@ -27,32 +27,35 @@ class HeatMap:
     def in_bounds(self, coord: Coord) -> bool:
         return coord.x in range(self.max_x) and coord.y in range(self.max_y)
 
+    def walk_direction(self, coord: Coord, heading: str, min_move: int, max_move: int) -> Iterator[Tuple[Coord, int]]:
+        extra_cost = 0
+        # Need to start at one to accumulate total cost
+        for i in range(1, max_move + 1):
+            coord += DIRECTIONS[heading]
+            if not self.in_bounds(coord):
+                break
+            extra_cost += self.map[coord]
+            # Now that we've accumulated the heat loss, apply the min move setting
+            if i < min_move:
+                continue
+            yield extra_cost, coord
+
     def find_min_path(self, min_move: int = 0, max_move: int = 3) -> int:
         # We need to avoid loops
         seen = set()
-        # heat_loss, curloc, last_dir
+        # cost, curloc, last_dir
         heap = [(0, Coord(0, 0), "E"), (0, Coord(0, 0), "S")]
         destination = Coord(y=self.max_y - 1, x=self.max_x - 1)
         while heap:
-            heat_loss, curloc, last_dir = heapq.heappop(heap)
+            cost, curloc, last_dir = heapq.heappop(heap)
             if curloc == destination:
-                return heat_loss
+                return cost
             if (curloc, last_dir) in seen:
                 continue
             seen.add((curloc, last_dir))
             for heading in (RIGHT_TURNS[last_dir], LEFT_TURNS[last_dir]):
-                new_heat_loss = heat_loss
-                new_loc = curloc
-                # Need to start at one to accumulate total cost
-                for i in range(1, max_move + 1):
-                    new_loc += DIRECTIONS[heading]
-                    if not self.in_bounds(new_loc):
-                        break
-                    new_heat_loss += self.map[new_loc]
-                    # Now that we've accumulated the heat loss, apply the min move setting
-                    if i < min_move:
-                        continue
-                    heapq.heappush(heap, (new_heat_loss, new_loc, heading))
+                for extra_cost, new_loc in self.walk_direction(curloc, heading, min_move, max_move):
+                    heapq.heappush(heap, (cost + extra_cost, new_loc, heading))
 
 
 def main():
