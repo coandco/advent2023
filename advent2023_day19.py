@@ -1,4 +1,6 @@
-from typing import NamedTuple, Dict
+from collections import deque
+from math import prod
+from typing import NamedTuple, Dict, List, Tuple, Optional
 
 from utils import read_data
 import time
@@ -25,6 +27,25 @@ class Part(NamedTuple):
         return sum(self)
 
 
+class PartRange(NamedTuple):
+    x: range
+    m: range
+    a: range
+    s: range
+
+    @staticmethod
+    def full_range() -> 'PartRange':
+        return PartRange(range(1, 4001), range(1, 4001), range(1, 4001), range(1, 4001))
+
+    def combinations(self) -> int:
+        return prod(len(x) for x in self)
+
+    def update_attr(self, attr_num: int, new_range: range) -> 'PartRange':
+        mutable = list(self)
+        mutable[attr_num] = new_range
+        return PartRange(*mutable)
+
+
 class Rule(NamedTuple):
     attr: int
     op: str
@@ -37,8 +58,14 @@ class Rule(NamedTuple):
     def matches(self, part: Part) -> bool:
         return part[self.attr] > self.val if self.op == '>' else part[self.attr] < self.val
 
-    def __repr__(self):
-        return f"Rule({ATTRS[self.attr]}, {self.op}, {self.val})"
+    def split_range(self, part_range: PartRange) -> Tuple[PartRange, Optional[PartRange]]:
+        if self.val in (rating := part_range[self.attr]):
+            if self.op == ">":
+                original, new = range(rating.start, self.val+1), range(self.val+1, rating.stop)
+            else:
+                new, original = range(rating.start, self.val), range(self.val, rating.stop)
+            return part_range.update_attr(self.attr, original), part_range.update_attr(self.attr, new)
+        return part_range, None
 
 
 class Workflow:
@@ -58,6 +85,26 @@ class Workflow:
     def get_dest(self, part: Part) -> str:
         return self.rules[matched] if any((matched := x).matches(part) for x in self.rules) else self.default
 
+    def split_range(self, to_split: PartRange) -> Tuple[List[Tuple[PartRange, str]], List[PartRange]]:
+        accepted_ranges = []
+        new_map = []
+        for rule, dest in self.rules.items():
+            to_split, new_range = rule.split_range(to_split)
+            if new_range:
+                if dest == 'A':
+                    accepted_ranges.append(new_range)
+                elif dest == 'R':
+                    pass
+                else:
+                    new_map.append((new_range, dest))
+        if self.default == 'A':
+            accepted_ranges.append(to_split)
+        elif self.default == 'R':
+            pass
+        else:
+            new_map.append((to_split, self.default))
+        return new_map, accepted_ranges
+
 
 class System:
     workflows: Dict[str, Workflow]
@@ -71,31 +118,24 @@ class System:
             cur_workflow = self.workflows[cur_workflow].get_dest(part)
         return cur_workflow == 'A'
 
+    def all_accepted(self) -> int:
+        ranges = deque()
+        ranges.append((PartRange.full_range(), "in"))
+        accepted_ranges = []
+        while ranges:
+            cur_range, dest = ranges.popleft()
+            new_ranges, new_accepted = self.workflows[dest].split_range(cur_range)
+            ranges.extend(new_ranges)
+            accepted_ranges.extend(new_accepted)
+        return sum(x.combinations() for x in accepted_ranges)
+
 
 def main():
-    TEST = """px{a<2006:qkq,m>2090:A,rfg}
-pv{a>1716:R,A}
-lnx{m>1548:A,A}
-rfg{s<537:gd,x>2440:R,A}
-qs{s>3448:A,lnx}
-qkq{x<1416:A,crn}
-crn{x>2662:A,R}
-in{s<1351:px,qqz}
-qqz{s>2770:qs,m<1801:hdj,R}
-gd{a>3333:R,R}
-hdj{m>838:A,pv}
-
-{x=787,m=2655,a=1222,s=2876}
-{x=1679,m=44,a=2067,s=496}
-{x=2036,m=264,a=79,s=2244}
-{x=2461,m=1339,a=466,s=291}
-{x=2127,m=1623,a=2188,s=1013}"""
     raw_workflows, raw_parts = read_data().split("\n\n")
     system = System(raw_workflows)
     parts = [Part.from_str(x) for x in raw_parts.splitlines()]
-    accepted = [x for x in parts if system.is_accepted(x)]
-    print(f"Part one: {sum(x.value() for x in accepted)}")
-
+    print(f"Part one: {sum(x.value() for x in parts if system.is_accepted(x))}")
+    print(f"Part two: {system.all_accepted()}")
 
 
 if __name__ == '__main__':
