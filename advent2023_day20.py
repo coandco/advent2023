@@ -11,16 +11,15 @@ class Module:
     outputs: List[str]
 
     def __init__(self, line: str):
-        line = line.lstrip("%&")
         self.name, raw_outputs = line.split(" -> ")
         self.outputs = raw_outputs.split(", ")
 
     @staticmethod
     def from_str(line: str) -> Union["Module", "FlipFlopModule", "ConjunctionModule"]:
         if line[0] == "%":
-            return FlipFlopModule(line)
+            return FlipFlopModule(line[1:])
         elif line[0] == "&":
-            return ConjunctionModule(line)
+            return ConjunctionModule(line[1:])
         else:
             return Module(line)
 
@@ -65,16 +64,18 @@ class Machine:
 
     def _push_button(self) -> Tuple[int, int]:
         pulses = deque([("button", "broadcaster", False)])
-        counts = [1, 0]
+        counts = [1, 0]  # one low signal sent and no high signals
         self.times_pushed += 1
         while pulses:
-            p_from, p_to, val = pulses.popleft()
-            new_pulse_val = self.modules[p_to].handle_pulse(p_from, val)
-            if val == 1 and p_to == self.rx_input and self.input_cycles.get(p_from, None) == 0:
-                self.input_cycles[p_from] = self.times_pushed
+            source, dest, val = pulses.popleft()
+            # If it's a high pulse coming from one of our upstream inputs and we haven't already found its cycle
+            if val and self.input_cycles.get(source, None) == 0:
+                self.input_cycles[source] = self.times_pushed
+            new_pulse_val = self.modules[dest].handle_pulse(source, val)
             if new_pulse_val is not None:
-                counts[new_pulse_val] += len(self.modules[p_to].outputs)
-                pulses.extend((p_to, x, new_pulse_val) for x in self.modules[p_to].outputs if x in self.modules)
+                counts[new_pulse_val] += len(self.modules[dest].outputs)
+                pulses.extend((dest, x, new_pulse_val) for x in self.modules[dest].outputs if x in self.modules)
+        # return low_count, high_count
         return counts[0], counts[1]
 
     def push_button(self, times: int) -> Tuple[int, int]:
