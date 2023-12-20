@@ -11,7 +11,7 @@ class Module:
     outputs: List[str]
 
     def __init__(self, line: str):
-        line = line.removeprefix("%").removeprefix("&")
+        line = line.lstrip("%&")
         self.name, raw_outputs = line.split(" -> ")
         self.outputs = raw_outputs.split(", ")
 
@@ -31,7 +31,7 @@ class Module:
 class FlipFlopModule(Module):
     state: bool = False
 
-    def handle_pulse(self, pulse_from: str, val: int) -> Optional[int]:
+    def handle_pulse(self, pulse_from: str, val: bool) -> Optional[bool]:
         if val:
             return None
         self.state = not self.state
