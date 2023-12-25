@@ -1,7 +1,8 @@
-from typing import Set, Dict, NamedTuple, Tuple, Optional, Iterable, FrozenSet
-
-from utils import read_data, BaseCoord as Coord
 import time
+from typing import Dict, FrozenSet, Iterable, NamedTuple, Optional, Set, Tuple
+
+from utils import BaseCoord as Coord
+from utils import read_data
 
 DIRS: Dict[str, Coord] = {"N": Coord(x=0, y=-1), "E": Coord(x=1, y=0), "S": Coord(x=0, y=1), "W": Coord(x=-1, y=0)}
 RIGHT: Dict[str, str] = {"N": "E", "E": "S", "S": "W", "W": "N"}
@@ -24,15 +25,19 @@ class Node:
         self.connections = {}
         self.distances = {}
 
+    def __repr__(self):
+        return f"Node({({v: self.distances[v] for k, v in self.connections.items() if v is not None})}"
+
     def add_connection(self, heading: str, coord: Coord, length: int):
-        self.connections[heading] = coord
-        self.distances[coord] = length
+        if heading not in self.connections:
+            self.connections[heading] = coord
+            self.distances[coord] = length
 
     def block_connection(self, heading: str):
         self.connections[heading] = None
 
     def remaining_dirs(self) -> Iterable[str]:
-        yield from (x for x in ('N', 'E', 'S', 'W') if x not in self.connections)
+        yield from (x for x in ("N", "E", "S", "W") if x not in self.connections)
 
     def connection_lengths(self, valid_dirs: Tuple[str, ...]) -> Dict[Coord, int]:
         return {v: self.distances[v] for k, v in self.connections.items() if v is not None and k in valid_dirs}
@@ -45,7 +50,7 @@ class Hike:
     end: Coord
     max_x: int
     max_y: int
-    valid_exits: Tuple[str, ...] = ('E', 'S')
+    valid_exits: Tuple[str, ...] = ("E", "S")
     nodes: Dict[Coord, Node]
 
     def __init__(self, raw_hike: str):
@@ -56,13 +61,13 @@ class Hike:
         self.max_x = len(lines[0])
         for y, line in enumerate(lines):
             for x, char in enumerate(line):
-                if char == '#':
+                if char == "#":
                     self.walls.add(Coord(x=x, y=y))
-                elif char in ('^', '>', 'v', '<'):
+                elif char in ("^", ">", "v", "<"):
                     self.slopes[Coord(x=x, y=y)] = char
-                elif char == '.' and y == 0:
+                elif char == "." and y == 0:
                     self.start = Coord(x=x, y=y)
-                elif char == '.' and y == len(lines) - 1:
+                elif char == "." and y == len(lines) - 1:
                     self.end = Coord(x=x, y=y)
         self.build_nodes()
 
@@ -113,8 +118,6 @@ class Hike:
         queue = [self.start]
         while queue:
             curloc = queue.pop()
-            # print(self.__str__(highlight=curloc))
-            # print("-------")
             for heading in self.nodes.setdefault(curloc, Node(curloc)).remaining_dirs():
                 newloc = curloc + DIRS[heading]
                 if newloc.y in range(self.max_y) and newloc not in self.walls:
@@ -136,38 +139,18 @@ class Hike:
     def max_node_distance(self) -> int:
         return self._max_node_distance(self.start, 0, frozenset())
 
+    def ignore_slopes(self):
+        self.valid_exits = ("N", "E", "S", "W")
+
 
 def main():
-    TEST = """#.#####################
-#.......#########...###
-#######.#########.#.###
-###.....#.>.>.###.#.###
-###v#####.#v#.###.#.###
-###.>...#.#.#.....#...#
-###v###.#.#.#########.#
-###...#.#.#.......#...#
-#####.#.#.#######.#.###
-#.....#.#.#.......#...#
-#.#####.#.#.#########v#
-#.#...#...#...###...>.#
-#.#.#v#######v###.###v#
-#...#.>.#...>.>.#.###.#
-#####v#.#.###v#.#.###.#
-#.....#...#...#.#.#...#
-#.#########.###.#.#.###
-#...###...#...#...#.###
-###.###.#.###v#####v###
-#...#...#.#.>.>.#.>.###
-#.###.###.#.###.#.#v###
-#.....###...###...#...#
-#####################.#"""
     hike = Hike(read_data())
     print(f"Part one: {hike.max_node_distance()}")
-    hike.valid_exits = ('N', 'E', 'S', 'W')
+    hike.ignore_slopes()
     print(f"Part two: {hike.max_node_distance()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time.monotonic()
     main()
     print(f"Time: {time.monotonic()-start}")
