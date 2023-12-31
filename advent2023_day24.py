@@ -111,7 +111,8 @@ class Storm:
     @staticmethod
     def check_candidate_velocity(hail: List[Hailstone2D], velocity: Coord) -> Optional[Coord]:
         all_intersections = (i.intersection(j, dv=velocity) for i, j in combinations(hail, 2))
-        first = next(all_intersections)
+        while (first := next(all_intersections)) is None:
+            pass
         return first if all(x is None or x == first for x in all_intersections) else None
 
     def find_rock_origin(self) -> Coord3D:
